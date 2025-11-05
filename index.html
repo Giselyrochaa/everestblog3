@@ -1,3 +1,4 @@
+
 <!DOCTYPE html>
 <html lang="pt-BR">
 <head>
@@ -261,10 +262,14 @@
          */
         async function initialize() {
             try {
-                // 1. Autenticação (obrigatória para operações de escrita)
+                // 1. Autenticação:
+                // É necessário que o usuário esteja autenticado (request.auth != null) para votar.
+                // Se houver um token customizado (ambiente Canvas), ele é usado. Caso contrário,
+                // o usuário é autenticado anonimamente (o que satisfaz a regra de escrita do Firestore).
                 if (initialAuthToken) {
                     await signInWithCustomToken(auth, initialAuthToken);
                 } else {
+                    // Autenticação anônima para permitir a votação
                     await signInAnonymously(auth);
                 }
                 
@@ -294,6 +299,19 @@
 
             } catch (error) {
                 console.error("Erro na inicialização ou autenticação do Firebase:", error);
+                
+                // --- NOVO TRATAMENTO DE ERRO VISÍVEL ---
+                const container = document.getElementById('voting-container');
+                container.innerHTML = `
+                    <div class="col-span-3 text-center p-8 bg-red-100 border border-red-400 text-red-700 rounded-xl shadow-md mx-auto max-w-lg">
+                        <p class="text-xl font-bold mb-2">❌ ERRO CRÍTICO DE INICIALIZAÇÃO</p>
+                        <p class="mt-2">Não foi possível conectar ou autenticar no Firebase.</p>
+                        <p class="text-sm mt-1 font-mono break-all">Detalhes (Console): ${error.message}</p>
+                        <p class="mt-4 text-sm">Certifique-se de que a configuração do ambiente está correta.</p>
+                    </div>
+                `;
+                // --- FIM DO NOVO TRATAMENTO ---
+
                 showMessage('Falha na conexão com o sistema de votação.', 'error');
             }
         }
